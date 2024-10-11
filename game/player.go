@@ -7,9 +7,10 @@ import (
 )
 
 type Player struct {
-	image    *ebiten.Image
-	position Vector
-	game     *Game
+	image             *ebiten.Image
+	position          Vector
+	game              *Game
+	laserLoadingTimer *Timer
 }
 
 func NewPlayer(game *Game) *Player {
@@ -24,9 +25,10 @@ func NewPlayer(game *Game) *Player {
 	}
 
 	return &Player{
-		position: position,
-		game:     game,
-		image:    image,
+		position:          position,
+		game:              game,
+		image:             image,
+		laserLoadingTimer: NewTimer(12),
 	}
 }
 
@@ -39,7 +41,9 @@ func (p *Player) Update() {
 		p.position.X += speed
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeySpace) {
+	p.laserLoadingTimer.Update()
+	if ebiten.IsKeyPressed(ebiten.KeySpace) && p.laserLoadingTimer.IsReady() {
+		p.laserLoadingTimer.Reset()
 
 		bounds := p.image.Bounds()
 		halfW := float64(bounds.Dx()) / 2 //Metade da largura da imagem lo laser
@@ -65,4 +69,13 @@ func (p *Player) Draw(screen *ebiten.Image) {
 	//Desenha imagem na tela
 	screen.DrawImage(p.image, op)
 
+}
+
+func (p *Player) Collider() Rect {
+	bounds := p.image.Bounds()
+
+	return NewRect(p.position.X,
+		p.position.Y,
+		float64(bounds.Dx()),
+		float64(bounds.Dy()))
 }
